@@ -1,0 +1,72 @@
+version: '3'
+
+services:
+  # PHP8.0-fpm: this container contains the app
+  app:
+    build:
+      context: phinx
+      dockerfile: runtimes/8.0/Dockerfile
+    restart: unless-stopped
+    tty: true
+    ports:
+      - 9000:9000
+      - 6001:6001
+    volumes:
+      - ./:/var/www
+      - ./phinx/runtimes/8.0/php.ini:/usr/local/etc/php/conf.d/local.ini
+    user: www
+    networks:
+      - app-network
+    depends_on:
+      - db
+      - redis
+
+  # Nginx webserver
+  server:
+    image: nginx:alpine
+    restart: unless-stopped
+    tty: true
+    ports:
+      - 80:80
+      - 443:443
+    volumes:
+      - ./:/var/www
+      - ./phinx/nginx/conf.d/:/etc/nginx/conf.d
+    networks:
+      - app-network
+    depends_on:
+      - app
+
+  # MySQL database
+  db:
+    image: mysql:8.0
+    ports:
+      - ${FORWARD_DB_PORT:-3306}:3306
+    environment:
+      MYSQL_ROOT_PASSWORD: ${DB_PASSWORD:-secret}
+      MYSQL_DATABASE: ${DB_DATABASE:-mysql_db}
+      MYSQL_USER: ${DB_USERNAME:-db_user}
+      MYSQL_PASSWORD: ${DB_PASSWORD:-secret}
+      MYSQL_ALLOW_EMPTY_PASSWORD: 'yes'
+    volumes:
+      - dbdata:/var/lib/mysql
+    networks:
+      - app-network
+
+  # Redis instance
+  redis:
+    image: redis:6.0
+    ports:
+      - ${REDIS_PORT:-6379}:6379
+    networks:
+      - app-network
+
+# Docker network
+networks:
+  app-network:
+    driver: bridge
+
+# Volumes
+volumes:
+  dbdata:
+    driver: local
