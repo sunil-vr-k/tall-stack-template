@@ -1,11 +1,11 @@
 version: '3'
 
 services:
-  # PHP8.0-fpm: this container contains the app
+  # PHP8.1-fpm: this container contains the app
   app:
     build:
       context: phinx
-      dockerfile: runtimes/8.0/Dockerfile
+      dockerfile: runtimes/8.1/Dockerfile
     restart: unless-stopped
     tty: true
     ports:
@@ -13,7 +13,7 @@ services:
       - 6001:6001
     volumes:
       - ./:/var/www
-      - ./phinx/runtimes/8.0/php.ini:/usr/local/etc/php/conf.d/local.ini
+      - ./phinx/runtimes/8.1/php.ini:/usr/local/etc/php/conf.d/local.ini
     user: www
     networks:
       - app-network
